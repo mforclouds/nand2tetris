@@ -40,4 +40,40 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+    // Test Mux
+    Mux16(a=instruction, b=null, sel=outNot, out[0]=jmp0, out[1]=jmp1, out[2]=jmp2, out[4]=selDReg, out[5]=selAWrite, out[6]=selNo, out[7]=selF, out[8]=selNy, out[9]=selZy, out[10]=selNx, out[11]=selZx, out[12]=selMux2, out[15]=selAReg, out=outMuxInst);
+
+    // Mux to A register
+    Mux16(a=instruction, b=outALU, sel=selAReg, out=outMux1);
+    
+
+
+    // A register load bit 
+    Not(in=selAReg, out=outNot);
+    Or(a=outNot, b=selAWrite, out=outOr);
+    Register(in=outMux1, load=outNot, out[0..14]=addressM, out=outAReg); 
+
+    // Mux to ALU
+    Mux16(a=outAReg, b=inM, sel=selMux2, out=outMux2);
+
+    // D register
+    Register(in=outALU, load=selDReg, out=outDReg);
+
+    // ALU
+    ALU(x=outDReg, y=outMux2, zx=selZx, nx=selNx, zy=selZy, ny=selNy, f=selF, no=selNo, zr=ourZr, ng=outNg, out=outALU);
+
+    //Jmp operations
+    And(a=ng, b=jmp2, out=outNg);
+    And(a=zr, b=jmp1, out=outZr);
+    Not(in=ng, out=notNg);
+    Not(in=zr, out=notZr);
+    And(a=notNg, b=notZr, out=outPos1);
+    And(a=outPos1, b=jmp0, out=posOutMain);
+    Or(a=outNg, b=outZr, out=orOut1);
+    Or(a=orOut1, b=posOutMain, out=orOutmain);
+
+    // PC
+    Not(in=orOutmain, out=NotLoad);
+    PC(in=aregout, load=orOutmain, inc=notLoad, reset=reset, out=pc);
+
 }
